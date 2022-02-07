@@ -27,4 +27,3 @@ elif [[ $# == 0 ]]; then
 	echo "have you tried adieu?"
 fi
 
-#grep -i -P '^(\w){5}$' /usr/share/dict/words | grep -i -v -P '^[wertuiasdhcm]....$' | grep -i -v -P '^.[wertuiasdhcm]...$' | grep -i -v -P '^..[wertuiasdhcm]..$' | grep -i -v -P '^...[wertuiasdhcm].$' | grep -i -v -P '^....[wertuiasdhcm]$' | grep -i -P '^..ol.$'
