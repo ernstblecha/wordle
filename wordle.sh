@@ -4,24 +4,52 @@ SELF=$(realpath "$0")
 DIR=$(dirname "$SELF")
 ME=$(basename "$0")
 
-if [ "$ME" = "wordlede" ]; then
-	wordlist="$DIR/wordle.de"
-elif [ "$ME" = "wordleen" ]; then
-	wordlist="$DIR/wordle.en"
-else
-	echo "no wordlist selected"
-	wordlist="/usr/share/dict/words"
-fi
+function getWordlist {
+	if [ "$ME" = "wordlede" ]; then
+		cat "$DIR/wordle.de"
+	elif [ "$ME" = "wordleen" ]; then
+		cat "$DIR/wordle.en"
+	else
+		cat "/usr/share/dict/words"
+	fi
+}
 
-echo $wordlist
+function filterFiveLetters {
+	grep -i -P '^(\w){5}$'
+}
+
+function filterPattern {
+	pattern="$1"
+	grep -i -P "^$pattern$"
+}
+
+function filterUnusedLetter {
+	prePattern="$1"
+	letters="$2"
+	postPattern="$3"
+	grep -i -v -P "^$prePattern[$letters]$postPattern$"
+}
+
+function filterUnusedLetters {
+	letters="$1"
+	filterUnusedLetter "" $letters "...." | filterUnusedLetter "." $letters "..." | filterUnusedLetter ".." $letters ".." | filterUnusedLetter "..." $letters "." | filterUnusedLetter "...." $letters ""
+}
+
+function filterUsedLetters {
+	pattern="$(echo $1 | sed -e 's/./(?=.*&)/g')"
+	grep -i -P "^$pattern"
+}
+
+function limitOutput {
+	shuf -n 30 | sort
+}
 
 if [[ $# == 1 ]]; then
-	grep -i -P '^(\w){5}$' "$wordlist" | grep -i -P "^$1$" | shuf -n 30 | sort
+	getWordlist | filterFiveLetters | filterPattern "$1" | limitOutput
 elif [[ $# == 2 ]]; then
-	grep -i -P '^(\w){5}$' "$wordlist" | grep -i -v -P "^[$2]....$" | grep -i -v -P "^.[$2]...$" | grep -i -v -P "^..[$2]..$" | grep -i -v -P "^...[$2].$" | grep -i -v -P "^....[$2]$" | grep -i -P "^$1$" | shuf -n 30 | sort
+	getWordlist | filterFiveLetters | filterUnusedLetters "$2" | filterPattern "$1" | limitOutput
 elif [[ $# == 3 ]]; then
-	pattern=$(echo $3 | sed -e 's/./(?=.*&)/g')
-	grep -i -P '^(\w){5}$' "$wordlist" | grep -i -v -P "^[$2]....$" | grep -i -v -P "^.[$2]...$" | grep -i -v -P "^..[$2]..$" | grep -i -v -P "^...[$2].$" | grep -i -v -P "^....[$2]$" | grep -i -P "^$1$" | grep -i -P "^$pattern" | shuf -n 30 | sort
+	getWordlist | filterFiveLetters | filterUnusedLetters "$2" | filterPattern "$1" | filterUsedLetters "$3" | limitOutput
 elif [[ $# == 0 ]]; then
 	echo "$ME ..... forbiddenletters containedletters"
 	echo "have you tried adieu?"
