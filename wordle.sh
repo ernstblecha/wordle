@@ -4,6 +4,8 @@ SELF=$(realpath "$0")
 DIR=$(dirname "$SELF")
 ME=$(basename "$0")
 
+nrOfLetters=5
+
 function die {
 	>&2 echo "${BASH_LINENO[0]}: $1"
 	exit 1
@@ -18,7 +20,7 @@ function verifyIndex {
 	input=$1
 	if [ ${#input} == 2 ]; then
 		index=${input:1:1}
-		if [ $index -lt 1 ] || [ $index -gt 5 ]; then
+		if [ $index -lt 1 ] || [ $index -gt $nrOfLetters ]; then
 			die "invalid index given (range)"
 		fi
 	else
@@ -30,7 +32,7 @@ function getIndex {
 	input=$1
 	if [ ${#input} == 2 ]; then
 		index=${input:1:1}
-		if [ $index -lt 1 ] || [ $index -gt 5 ]; then
+		if [ $index -lt 1 ] || [ $index -gt $nrOfLetters ]; then
 			die "invalid index given (range)"
 		fi
 		echo $index
@@ -60,7 +62,11 @@ function inclusionPattern {
 }
 
 function filterInclusions {
-	pattern="^$(inclusionPattern 1)$(inclusionPattern 2)$(inclusionPattern 3)$(inclusionPattern 4)$(inclusionPattern 5)$"
+	pattern="^"
+	for i in $(seq 1 $nrOfLetters); do
+		pattern="$pattern$(inclusionPattern $i)"
+	done
+	pattern="$pattern$"
 	debug "$pattern"
 	grep -i -P "$pattern"
 }
@@ -72,17 +78,33 @@ function exclusionPattern {
 }
 
 function exclusionElement {
-	charClass="$(exclusionPattern $1)"
+	index=$1
+	charClass="$(exclusionPattern $index)"
 	charClass=$([ $charClass == "[]" ] && echo "0" || echo "$charClass")
-	prePattern="$2"
-	postPattern="$3"
-	pattern="^$prePattern$charClass$postPattern$"
+	pattern="^"
+	for i in $(seq 1 $nrOfLetters); do
+		if [ $i == $index ]; then
+			pattern="$pattern$charClass"
+		else
+			pattern="$pattern$(inclusionPattern $i)"
+		fi
+	done
+	pattern="$pattern$"
 	debug "$pattern"
 	grep -i -v -P "$pattern"
 }
 
+function exclusionRecursion {
+	index="$1"
+	if [ $index == 1 ]; then
+		exclusionElement "$index"
+	else
+		exclusionElement "$index" | exclusionRecursion "$(expr $index - 1)"
+	fi
+}
+
 function filterExclusions {
-	exclusionElement 1 "" "...." | exclusionElement 2 "." "..." | exclusionElement 3 ".." ".." | exclusionElement 4 "..." "." | exclusionElement 5 "...." ""
+	exclusionRecursion "$nrOfLetters"
 }
 
 function filterMustHaves {
@@ -106,8 +128,8 @@ if [ $# == 0 ]; then
 fi
 
 
-includes=("" "" "" "" "" "")
-excludes=("" "" "" "" "" "")
+includes=("")
+excludes=("")
 mustHaves=""
 
 wordlist=$1
