@@ -17,7 +17,7 @@ function debug {
 }
 
 function verifyIndex {
-	input=$1
+	local input=$1
 	if [ ${#input} == 2 ]; then
 		index=${input:1:1}
 		if [ $index -lt 1 ] || [ $index -gt $nrOfLetters ]; then
@@ -29,7 +29,7 @@ function verifyIndex {
 }
 
 function getIndex {
-	input=$1
+	local input=$1
 	if [ ${#input} == 2 ]; then
 		index=${input:1:1}
 		if [ $index -lt 1 ] || [ $index -gt $nrOfLetters ]; then
@@ -54,15 +54,15 @@ function getWordlist {
 }
 
 function inclusionPattern {
-	globalInclusions=${includes[0]}
-	localInclusions=${includes[$1]}
-	charClass=$globalInclusions$localInclusions
+	local globalInclusions=${includes[0]}
+	local localInclusions=${includes[$1]}
+	local charClass=$globalInclusions$localInclusions
 	charClass=$([ "$charClass" == "" ] && echo "a-z" || echo $charClass)
 	echo "[$charClass]"
 }
 
 function filterInclusions {
-	pattern="^"
+	local pattern="^"
 	for i in $(seq 1 $nrOfLetters); do
 		pattern="$pattern$(inclusionPattern $i)"
 	done
@@ -72,16 +72,16 @@ function filterInclusions {
 }
 
 function exclusionPattern {
-	globalExclusions=${excludes[0]}
-	localExclusions=${excludes[$1]}
+	local globalExclusions=${excludes[0]}
+	local localExclusions=${excludes[$1]}
 	echo "[$globalExclusions$localExclusions]"
 }
 
 function exclusionElement {
-	index=$1
-	charClass="$(exclusionPattern $index)"
+	local index=$1
+	local charClass="$(exclusionPattern $index)"
 	charClass=$([ $charClass == "[]" ] && echo "0" || echo "$charClass")
-	pattern="^"
+	local pattern="^"
 	for i in $(seq 1 $nrOfLetters); do
 		if [ $i == $index ]; then
 			pattern="$pattern$charClass"
@@ -95,7 +95,7 @@ function exclusionElement {
 }
 
 function exclusionRecursion {
-	index="$1"
+	local index="$1"
 	if [ $index == 1 ]; then
 		exclusionElement "$index"
 	else
@@ -108,7 +108,7 @@ function filterExclusions {
 }
 
 function filterMustHaves {
-	pattern="^$(echo $mustHaves | sed -e 's/./(?=.*&)/g')"
+	local pattern="^$(echo $mustHaves | sed -e 's/./(?=.*&)/g')"
 	debug "$pattern"
 	grep -i -P "$pattern"
 }
@@ -126,7 +126,6 @@ if [ $# == 0 ]; then
 	echo "-4 ... exclusion letters for position 4"
 	exit 1
 fi
-
 
 includes=("")
 excludes=("")
@@ -174,8 +173,9 @@ if [ $# -gt 0 ]; then
 	die "leftover parameters"
 fi;
 
-debug "${includes[0]} | ${includes[1]} | ${includes[2]} | ${includes[3]} | ${includes[4]} | ${includes[5]}"
-debug "${excludes[0]} | ${excludes[1]} | ${excludes[2]} | ${excludes[3]} | ${excludes[4]} | ${excludes[5]}"
-debug $wordlist
+debug "includes: $(printf "%s\n" "${includes[@]@K}")"
+debug "excludes: $(printf "%s\n" "${excludes[@]@K}")"
+debug "mustHaves: $mustHaves"
+debug "wordlist: $wordlist"
 
 getWordlist | sanitizePipe | filterInclusions | filterExclusions | filterMustHaves | limitOutput
