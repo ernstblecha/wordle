@@ -53,9 +53,10 @@ function getWordlist {
 
 function inclusionPattern {
 	globalInclusions=${includes[0]}
-	globalInclusions=$([ "$globalInclusions" == "" ] && echo "a-z" || echo $globalInclusions)
 	localInclusions=${includes[$1]}
-	echo "[$globalInclusions$localInclusions]"
+	charClass=$globalInclusions$localInclusions
+	charClass=$([ "$charClass" == "" ] && echo "a-z" || echo $charClass)
+	echo "[$charClass]"
 }
 
 function filterInclusions {
