@@ -179,4 +179,4 @@ debug "excludes: $(printf "%s\n" "${excludes[@]@K}")"
 debug "mustHaves: $mustHaves"
 debug "wordlist: $wordlist"
 
-getWordlist | sanitizePipe | filterInclusions | filterExclusions | filterMustHaves | limitOutput
+getWordlist | sanitizePipe | filterInclusions | filterExclusions | filterMustHaves | limitOutput | xargs -n5
