@@ -19,7 +19,7 @@ function debug {
 function verifyIndex {
 	local input=$1
 	if [ ${#input} == 2 ]; then
-		index=${input:1:1}
+		local index=${input:1:1}
 		if [ $index -lt 1 ] || [ $index -gt $nrOfLetters ]; then
 			die "invalid index given (range)"
 		fi
@@ -31,7 +31,7 @@ function verifyIndex {
 function getIndex {
 	local input=$1
 	if [ ${#input} == 2 ]; then
-		index=${input:1:1}
+		local index=${input:1:1}
 		if [ $index -lt 1 ] || [ $index -gt $nrOfLetters ]; then
 			die "invalid index given (range)"
 		fi
@@ -96,10 +96,10 @@ function exclusionElement {
 
 function exclusionRecursion {
 	local index="$1"
-	if [ $index == 1 ]; then
-		exclusionElement "$index"
-	else
+	if [ $index -gt 1 ]; then
 		exclusionElement "$index" | exclusionRecursion "$(expr $index - 1)"
+	else
+		exclusionElement "$index"
 	fi
 }
 
@@ -124,7 +124,8 @@ if [ $# == 0 ]; then
 	echo ": ... global must have letters"
 	echo "+1 ... inclusion letters for position 1"
 	echo "-4 ... exclusion letters for position 4"
-	exit 1
+        echo "wordlist is a list of allowed words, one word per line"
+	exit 0
 fi
 
 includes=("")
