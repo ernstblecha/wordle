@@ -1,0 +1,6 @@
+#!/bin/bash
+
+SELF=$(realpath "$0")
+DIR=$(dirname "$SELF")
+
+$DIR/wordle.sh "$DIR/wordle.de" $@
