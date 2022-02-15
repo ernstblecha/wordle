@@ -1,7 +1,5 @@
 #!/bin/bash
 
-SELF=$(realpath "$0")
-DIR=$(dirname "$SELF")
 ME=$(basename "$0")
 
 nrOfLetters=5
@@ -20,7 +18,7 @@ function verifyIndex {
 	local input=$1
 	if [ ${#input} == 2 ]; then
 		local index=${input:1:1}
-		if [ $index -lt 1 ] || [ $index -gt $nrOfLetters ]; then
+		if [ "$index" -lt 1 ] || [ "$index" -gt $nrOfLetters ]; then
 			die "invalid index given (range)"
 		fi
 	else
@@ -32,17 +30,17 @@ function getIndex {
 	local input=$1
 	if [ ${#input} == 2 ]; then
 		local index=${input:1:1}
-		if [ $index -lt 1 ] || [ $index -gt $nrOfLetters ]; then
+		if [ "$index" -lt 1 ] || [ "$index" -gt $nrOfLetters ]; then
 			die "invalid index given (range)"
 		fi
-		echo $index
+		echo "$index"
 	else
 		die "invalid index given (length)"
 	fi
 }
 
 function sanitizeString {
-	echo $1 | tr -dc '[:alnum:]' | tr '[:upper:]' '[:lower:]'
+	echo "$1" | tr -dc '[:alnum:]' | tr '[:upper:]' '[:lower:]'
 }
 
 function sanitizePipe {
@@ -57,14 +55,14 @@ function inclusionPattern {
 	local globalInclusions=${includes[0]}
 	local localInclusions=${includes[$1]}
 	local charClass=$globalInclusions$localInclusions
-	charClass=$([ "$charClass" == "" ] && echo "a-z" || echo $charClass)
+	charClass=$([ "$charClass" == "" ] && echo "a-z" || echo "$charClass")
 	echo "[$charClass]"
 }
 
 function filterInclusions {
 	local pattern="^"
 	for i in $(seq 1 $nrOfLetters); do
-		pattern="$pattern$(inclusionPattern $i)"
+		pattern="$pattern$(inclusionPattern "$i")"
 	done
 	pattern="$pattern$"
 	debug "$pattern"
@@ -79,14 +77,15 @@ function exclusionPattern {
 
 function exclusionElement {
 	local index=$1
-	local charClass="$(exclusionPattern $index)"
-	charClass=$([ $charClass == "[]" ] && echo "0" || echo "$charClass")
+	local charClass
+	charClass="$(exclusionPattern "$index")"
+	charClass=$([ "$charClass" == "[]" ] && echo "0" || echo "$charClass")
 	local pattern="^"
 	for i in $(seq 1 $nrOfLetters); do
-		if [ $i == $index ]; then
+		if [ "$i" == "$index" ]; then
 			pattern="$pattern$charClass"
 		else
-			pattern="$pattern$(inclusionPattern $i)"
+			pattern="$pattern$(inclusionPattern "$i")"
 		fi
 	done
 	pattern="$pattern$"
@@ -96,8 +95,8 @@ function exclusionElement {
 
 function exclusionRecursion {
 	local index="$1"
-	if [ $index -gt 1 ]; then
-		exclusionElement "$index" | exclusionRecursion "$(expr $index - 1)"
+	if [ "$index" -gt 1 ]; then
+		exclusionElement "$index" | exclusionRecursion "$((index - 1))"
 	else
 		exclusionElement "$index"
 	fi
@@ -108,7 +107,10 @@ function filterExclusions {
 }
 
 function filterMustHaves {
-	local pattern="^$(echo $mustHaves | sed -e 's/./(?=.*&)/g')"
+	local pattern
+	# no idea how to do this with patern matching
+	# shellcheck disable=SC2001
+	pattern="^$(echo "$mustHaves" | sed -e 's/./(?=.*&)/g')"
 	debug "$pattern"
 	grep -i -P "$pattern"
 }
@@ -117,7 +119,7 @@ function limitOutput {
 	shuf -n 30 | sort
 }
 
-if [ $# == 0 ]; then
+if [ $# -le 1 ]; then
 	echo "$ME wordlist + nsel - dfg +1 i : l"
 	echo "+ ... global inclusion letters"
 	echo "- ... global exclusion letters"
@@ -144,24 +146,24 @@ while [ $# -gt 1 ]; do
 	case "$1" in
 		+)
 			index="0"
-			includes[$index]="${includes[$index]}$(sanitizeString $2)"
+			includes[$index]="${includes[$index]}$(sanitizeString "$2")"
 			debug "global inclusions: ${includes[$index]}";;
 		-)
 			index="0"
-			excludes[$index]="${excludes[$index]}$(sanitizeString $2)"
+			excludes[$index]="${excludes[$index]}$(sanitizeString "$2")"
 			debug "global exclusions: ${excludes[$index]}";;
 		:)
-			mustHaves="$mustHaves$(sanitizeString $2)"
+			mustHaves="$mustHaves$(sanitizeString "$2")"
 			debug "must haves: $mustHaves";;
 		+*)
 			verifyIndex "$1"
 			index=$(getIndex "$1")
-			includes[$index]="${includes[$index]}$(sanitizeString $2)"
+			includes[$index]="${includes[$index]}$(sanitizeString "$2")"
 			debug "inclusions for $index: ${includes[$index]}";;
 		-*)
 			verifyIndex "$1"
 			index=$(getIndex "$1")
-			excludes[$index]="${excludes[$index]}$(sanitizeString $2)"
+			excludes[$index]="${excludes[$index]}$(sanitizeString "$2")"
 			debug "exclusions for $index: ${excludes[$index]}";;
 		*)
 			die "invalid parameter";;
