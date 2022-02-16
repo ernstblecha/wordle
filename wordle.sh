@@ -52,9 +52,8 @@ function getWordlist {
 }
 
 function inclusionPattern {
-	local globalInclusions=${includes[0]}
 	local localInclusions=${includes[$1]}
-	local charClass=$globalInclusions$localInclusions
+	local charClass=$localInclusions
 	charClass=$([ "$charClass" == "" ] && echo "a-z" || echo "$charClass")
 	echo "[$charClass]"
 }
@@ -110,7 +109,7 @@ function filterMustHaves {
 	local pattern
 	# no idea how to do this with patern matching
 	# shellcheck disable=SC2001
-	pattern="^$(echo "$mustHaves" | sed -e 's/./(?=.*&)/g')"
+	pattern="^$(echo "${includes[0]}" | sed -e 's/./(?=.*&)/g')"
 	debug "$pattern"
 	grep -i -P "$pattern"
 }
@@ -120,10 +119,9 @@ function limitOutput {
 }
 
 if [ $# -le 1 ]; then
-	echo "$ME wordlist + nsel - dfg +1 i : l"
-	echo "+ ... global inclusion letters"
+	echo "example: $ME wordlist + nsel - dfg +1 i : l"
+	echo "+ ... global must have letters"
 	echo "- ... global exclusion letters"
-	echo ": ... global must have letters"
 	echo "+1 ... inclusion letters for position 1"
 	echo "-4 ... exclusion letters for position 4"
         echo "wordlist is a list of allowed words, one word per line"
@@ -132,7 +130,6 @@ fi
 
 includes=("")
 excludes=("")
-mustHaves=""
 
 wordlist=$1
 if [[ -f "$wordlist" ]] && [[ -r "$wordlist" ]]; then
@@ -145,16 +142,12 @@ while [ $# -gt 1 ]; do
 
 	case "$1" in
 		+)
-			index="0"
-			includes[$index]="${includes[$index]}$(sanitizeString "$2")"
-			debug "global inclusions: ${includes[$index]}";;
+			includes[0]="${includes[0]}$(sanitizeString "$2")"
+			debug "must haves: ${includes[0]}";;
 		-)
 			index="0"
 			excludes[$index]="${excludes[$index]}$(sanitizeString "$2")"
 			debug "global exclusions: ${excludes[$index]}";;
-		:)
-			mustHaves="$mustHaves$(sanitizeString "$2")"
-			debug "must haves: $mustHaves";;
 		+*)
 			verifyIndex "$1"
 			index=$(getIndex "$1")
@@ -178,7 +171,6 @@ fi;
 
 debug "includes: $(printf "%s\n" "${includes[@]@K}")"
 debug "excludes: $(printf "%s\n" "${excludes[@]@K}")"
-debug "mustHaves: $mustHaves"
 debug "wordlist: $wordlist"
 
 getWordlist | sanitizePipe | filterInclusions | filterExclusions | filterMustHaves | limitOutput | xargs -n5
