@@ -140,23 +140,24 @@ fi
 
 while [ $# -gt 1 ]; do
 
+	input=$(sanitizeString "$2")
+
 	case "$1" in
 		+)
-			includes[0]="${includes[0]}$(sanitizeString "$2")"
+			includes[0]="${includes[0]}$input"
 			debug "must haves: ${includes[0]}";;
 		-)
-			index="0"
-			excludes[$index]="${excludes[$index]}$(sanitizeString "$2")"
-			debug "global exclusions: ${excludes[$index]}";;
+			excludes[0]="${excludes[0]}$input"
+			debug "global exclusions: ${excludes[0]}";;
 		+*)
 			verifyIndex "$1"
 			index=$(getIndex "$1")
-			includes[$index]="${includes[$index]}$(sanitizeString "$2")"
+			includes[$index]="${includes[$index]}$input"
 			debug "inclusions for $index: ${includes[$index]}";;
 		-*)
 			verifyIndex "$1"
 			index=$(getIndex "$1")
-			excludes[$index]="${excludes[$index]}$(sanitizeString "$2")"
+			excludes[$index]="${excludes[$index]}$input"
 			debug "exclusions for $index: ${excludes[$index]}";;
 		*)
 			die "invalid parameter";;
